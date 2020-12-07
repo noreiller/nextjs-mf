@@ -5,7 +5,7 @@ module.exports = class MergeRemoteChunksPlugin {
     this._options = Object.assign(
       {},
       {
-        filename: "remoteEntry",
+        filename: "static/runtime/remoteEntry.js",
       },
       options
     );
@@ -18,7 +18,7 @@ module.exports = class MergeRemoteChunksPlugin {
     // Specify the event hook to attach to
     compiler.hooks.afterEmit.tap("MergeRemoteChunksPlugin", (output) => {
       const emittedAssets = Array.from(output.emittedAssets);
-      const { dir, name } = path.parse(options.filename);
+      const { dir, name, ext } = path.parse(options.filename);
       const files = ["static/chunks/webpack", path.join(dir, name)]
         .filter((neededChunk) =>
           emittedAssets.some((emmitedAsset) =>
@@ -38,18 +38,18 @@ module.exports = class MergeRemoteChunksPlugin {
         const merged = [runtime, remoteContainer].join("\n");
         const remotePath = path.join(
           compiler.options.output.path,
-          "static/runtime"
+          path.dirname(options.filename)
         );
+        const remoteFileName = `${path.basename(
+          options.filename,
+          ext
+        )}Merged${ext}`;
         if (fs.existsSync(remotePath)) {
           fs.mkdir(remotePath, { recursive: true }, (err) => {
             if (err) throw err;
           });
         }
-        fs.writeFile(
-          path.join(remotePath, "/remoteEntryMerged.js"),
-          merged,
-          () => {}
-        );
+        fs.writeFile(path.join(remotePath, remoteFileName), merged, () => {});
       }
     });
   }
